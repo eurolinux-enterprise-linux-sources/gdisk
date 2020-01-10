@@ -1,16 +1,18 @@
 Summary:       An fdisk-like partitioning tool for GPT disks
 Name:          gdisk
-Version:       0.8.10
-Release:       3%{?dist}
+Version:       0.8.6
+Release:       2%{?dist}
 License:       GPLv2
 URL:           http://www.rodsbooks.com/gdisk/
 Group:         System Environment/Base
 Source0:       http://downloads.sourceforge.net/gptfdisk/gptfdisk-%{version}.tar.gz
-
-# fix spurious exit code
-Patch0:        gdisk-0.8.10-exit-code.patch
-
+Patch0:        gptfdisk-0.8.1-gcc47.patch
+# Segmentation fault when argument 'partnum' of part-get-gpt-type is too large
+# https://bugzilla.redhat.com/show_bug.cgi?id=1007761
+# Fedora RHBZ#1007847 - patch sent upstream on 2013-09-13.
+Patch1:        gdisk-0.8.7-add-range-check.patch
 BuildRequires: popt-devel
+BuildRequires: libicu-devel
 BuildRequires: libuuid-devel
 BuildRequires: ncurses-devel
 BuildRoot:     %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
@@ -23,6 +25,7 @@ tables, and the ability to convert MBR disks to GPT format.
 %prep
 %setup -q -n gptfdisk-%{version}
 %patch0 -p1
+%patch1 -p1
 chmod 0644 gdisk_test.sh
 
 %build
@@ -51,24 +54,6 @@ done
 %{_mandir}/man8/fixparts.8*
 
 %changelog
-* Wed Dec 05 2018 Nikola Forró <nforro@redhat.com> - 0.8.10-3
-- Fix spurious exit code (#1656300)
-
-* Mon May 28 2018 Nikola Forró <nforro@redhat.com> - 0.8.10-2
-- Remove libicu build dependency
-
-* Tue Jan 30 2018 Nikola Forró <nforro@redhat.com> - 0.8.10-1
-- Update to 0.8.10 (#1540008)
-
-* Fri Oct 03 2014 Tomas Bzatek <tbzatek@redhat.com> - 0.8.6-5
-- Fix sgdisk alignment code (#1087353)
-
-* Fri Jan 24 2014 Daniel Mach <dmach@redhat.com> - 0.8.6-4
-- Mass rebuild 2014-01-24
-
-* Fri Dec 27 2013 Daniel Mach <dmach@redhat.com> - 0.8.6-3
-- Mass rebuild 2013-12-27
-
 * Thu Sep 26 2013 Tomas Bzatek <tbzatek@redhat.com> - 0.8.6-2
 - Range check -i option (#1007761)
 

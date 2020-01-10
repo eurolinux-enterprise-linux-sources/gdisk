@@ -35,8 +35,6 @@ using namespace std;
 // Note: This class's data size is critical. If data elements must be added,
 // it will be necessary to modify various GPT classes to compensate.
 class GUIDData {
-   private:
-      static bool firstInstance;
    protected:
       my_uuid_t uuidData;
       string DeleteSpaces(string s);

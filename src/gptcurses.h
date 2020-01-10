@@ -1,7 +1,7 @@
 /*
  *    Implementation of GPTData class derivative with curses-based text-mode
  *    interaction
- *    Copyright (C) 2011-2013 Roderick W. Smith
+ *    Copyright (C) 2011 Roderick W. Smith
  *
  *    This program is free software; you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
@@ -54,9 +54,6 @@ static struct MenuItem menuMain[] = {
 #define EMPTY_SPACE_OPTIONS "abhlnqvw"
 #define PARTITION_OPTIONS "abdhilmqtvw"
 
-// Constants for how to highlight a selected menu item
-#define USE_CURSES 1
-#define USE_ARROW 2
 
 // A "Space" is a partition or an unallocated chunk of disk space, maintained
 // in a doubly-linked-list data structure to facilitate creating displays of
@@ -84,7 +81,6 @@ protected:
    string whichOptions;
    char currentKey;
    int numSpaces;
-   int displayType;
 
    // Functions relating to Spaces data structures
    void EmptySpaces(void);
@@ -115,7 +111,6 @@ public:
    void LoadBackup(void);
    void ShowHelp(void);
    // User input and menuing functions
-   void SetDisplayType(int dt) {displayType = dt;}
    void ChangeSpaceSelection(int delta);
    void MoveSelection(int delta);
    void DisplayOptions(char selectedKey);

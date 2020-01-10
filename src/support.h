@@ -1,4 +1,4 @@
-/* This program is copyright (c) 2009-2013 by Roderick W. Smith. It is distributed
+/* This program is copyright (c) 2009 by Roderick W. Smith. It is distributed
   under the terms of the GNU GPL version 2, as detailed in the COPYING file. */
 
 #include <stdint.h>
@@ -8,7 +8,7 @@
 #ifndef __GPTSUPPORT
 #define __GPTSUPPORT
 
-#define GPTFDISK_VERSION "0.8.10"
+#define GPTFDISK_VERSION "0.8.6"
 
 #if defined (__FreeBSD__) || defined (__FreeBSD_kernel__) || defined (__APPLE__)
 // Darwin (Mac OS) & FreeBSD: disk IOCTLs are different, and there is no lseek64
@@ -67,7 +67,7 @@
 #define GPT_SIZE 128
 #define HEADER_SIZE UINT32_C(92)
 #define GPT_RESERVED 420
-#define NAME_SIZE 36 // GPT allows 36 UTF-16LE code units for a name in a 128 byte partition entry
+#define NAME_SIZE 72
 
 using namespace std;
 

@@ -1,7 +1,7 @@
 /*
  *    Implementation of GPTData class derivative with curses-based text-mode
  *    interaction
- *    Copyright (C) 2011-2013 Roderick W. Smith
+ *    Copyright (C) 2011 Roderick W. Smith
  *
  *    This program is free software; you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
@@ -39,7 +39,6 @@ GPTDataCurses::GPTDataCurses(void) {
    if (numInstances > 0) {
       refresh();
    } else {
-      setlocale( LC_ALL , "" );
       initscr();
       cbreak();
       noecho();
@@ -54,7 +53,6 @@ GPTDataCurses::GPTDataCurses(void) {
    currentSpaceNum = -1;
    whichOptions = ""; // current set of options
    currentKey = 'b'; // currently selected option
-   displayType = USE_CURSES;
 } // GPTDataCurses constructor
 
 GPTDataCurses::~GPTDataCurses(void) {
@@ -275,16 +273,10 @@ int GPTDataCurses::DisplayParts(int selected) {
    for (i = pageNum * numToShow; i <= (pageNum + 1) * numToShow - 1; i++) {
       if (i < numSpaces) { // real space; show it
          if (i == selected) {
+            attron(A_REVERSE);
             currentSpaceNum = i;
-            if (displayType == USE_CURSES) {
-               attron(A_REVERSE);
-               currentSpace = ShowSpace(i, lineNum++);
-               attroff(A_REVERSE);
-            } else {
-               currentSpace = ShowSpace(i, lineNum);
-               move(lineNum++, 0);
-               printw(">");
-            }
+            currentSpace = ShowSpace(i, lineNum++);
+            attroff(A_REVERSE);
             DisplayOptions(i);
             retval = selected;
          } else {
@@ -319,7 +311,7 @@ void GPTDataCurses::DeletePartition(int partNum) {
 void GPTDataCurses::ShowInfo(int partNum) {
    uint64_t size;
 #ifdef USE_UTF16
-   char temp[NAME_SIZE + 1];
+   char temp[NAME_SIZE / 2 + 1];
 #endif
 
    clear();
@@ -336,7 +328,7 @@ void GPTDataCurses::ShowInfo(int partNum) {
    printw("Partition size: %lld sectors (%s)\n", size, BytesToIeee(size, blockSize).c_str());
    printw("Attribute flags: %016x\n", partitions[partNum].GetAttributes().GetAttributes());
    #ifdef USE_UTF16
-   partitions[partNum].GetDescription().extract(0, NAME_SIZE , temp, NAME_SIZE );
+   partitions[partNum].GetDescription().extract(0, NAME_SIZE / 2, temp, NAME_SIZE / 2);
    printw("Partition name: '%s'\n", temp);
    #else
    printw("Partition name: '%s'\n", partitions[partNum].GetDescription().c_str());
@@ -346,21 +338,21 @@ void GPTDataCurses::ShowInfo(int partNum) {
 
 // Prompt for and change a partition's name....
 void GPTDataCurses::ChangeName(int partNum) {
-   char temp[NAME_SIZE + 1];
+   char temp[NAME_SIZE / 2 + 1];
 
    if (ValidPartNum(partNum)) {
       move(LINES - 4, 0);
       clrtobot();
       move(LINES - 4, 0);
       #ifdef USE_UTF16
-      partitions[partNum].GetDescription().extract(0, NAME_SIZE , temp, NAME_SIZE );
+      partitions[partNum].GetDescription().extract(0, NAME_SIZE / 2, temp, NAME_SIZE / 2);
       printw("Current partition name is '%s'\n", temp);
       #else
       printw("Current partition name is '%s'\n", partitions[partNum].GetDescription().c_str());
       #endif
       printw("Enter new partition name, or <Enter> to use the current name:\n");
       echo();
-      getnstr(temp, NAME_SIZE );
+      getnstr(temp, NAME_SIZE / 2);
       partitions[partNum].SetName((string) temp);
       noecho();
    } // if
@@ -738,9 +730,8 @@ void GPTDataCurses::DrawMenu(void) {
    string drive="Disk Drive: ";
    drive += device;
    ostringstream size;
-
    size << "Size: " << diskSize << ", " << BytesToIeee(diskSize, blockSize);
-
+   
    clear();
    move(0, (COLS - title.length()) / 2);
    printw(title.c_str());
@@ -813,7 +804,7 @@ void ShowTypes(void) {
 
    def_prog_mode();
    endwin();
-   tempType.ShowAllTypes(LINES - 3);
+   tempType.ShowAllTypes();
    cout << "\nPress the <Enter> key to continue: ";
    cin.get(junk);
    reset_prog_mode();

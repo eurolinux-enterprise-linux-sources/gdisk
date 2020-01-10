@@ -3,7 +3,7 @@ Content-type: text/html
 <HTML><HEAD><TITLE>Manpage of GDISK</TITLE>
 </HEAD><BODY>
 <H1>GDISK</H1>
-Section: GPT fdisk Manual (8)<BR>Updated: 0.8.10<BR><A HREF="#index">Index</A>
+Section: GPT fdisk Manual (8)<BR>Updated: 0.8.6<BR><A HREF="#index">Index</A>
 <A HREF="http://localhost/cgi-bin/man/man2html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -152,7 +152,7 @@ instance) to simplify creating such gaps.
 <DT><B>-l</B>
 
 <DD>
-List the partition table for the specified device and then exits.
+List the partition tables for the specified devices and then exit.
 </DL>
 <P>
 
@@ -391,7 +391,7 @@ OSes, or those that can't boot from a GPT disk, to access up to three of
 the partitions on the disk by creating MBR entries for them. Note that
 these hybrid MBR entries can easily go out of sync with the GPT entries,
 particularly when hybrid-unaware GPT utilities are used to edit the disk.
-Thus, you may need to re-create the hybrid MBR if you use such tools. Unlike
+Thus, you may need to recreate the hybrid MBR if you use such tools. Unlike
 the 'g' option, this option does not support converting any partitions into
 MBR logical partitions.
 <P>
@@ -656,7 +656,7 @@ usually bypasses the prompt entirely.
 <A NAME="lbAF">&nbsp;</A>
 <H2>BUGS</H2>
 
-As of March 2014 (version 0.8.10), <B>gdisk</B>
+As of January 2013 (version 0.8.6), <B>gdisk</B>
 should be considered beta software. Known bugs and limitations include:
 <P>
 <DL COMPACT>
@@ -816,6 +816,6 @@ available from Rod Smith.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 17:57:37 GMT, March 02, 2014
+Time: 16:09:33 GMT, January 09, 2013
 </BODY>
 </HTML>

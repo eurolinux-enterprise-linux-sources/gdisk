@@ -3,7 +3,7 @@ Content-type: text/html
 <HTML><HEAD><TITLE>Manpage of CGDISK</TITLE>
 </HEAD><BODY>
 <H1>CGDISK</H1>
-Section: GPT fdisk Manual (8)<BR>Updated: 0.8.10<BR><A HREF="#index">Index</A>
+Section: GPT fdisk Manual (8)<BR>Updated: 0.8.6<BR><A HREF="#index">Index</A>
 <A HREF="http://localhost/cgi-bin/man/man2html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -15,7 +15,6 @@ cgdisk - Curses-based GUID partition table (GPT) manipulator
 
 <B>cgdisk </B>
 
-[ -a ]
 <I>device</I>
 
 <P>
@@ -128,13 +127,6 @@ instance) to simplify creating such gaps.
 <P>
 <P>
 
-<P>
-Only one command-line option is accepted, aside from the device filename:
-<I>-a</I>. This option alters the highlighting of partitions and blocks of
-free space: Instead of using ncurses, when <I>-a</I> is used <B>cgdisk</B>
-uses a &quot;&gt;&quot; symbol to the left of the selected partition or free space.
-This option is intended for use on limited display devices such as
-teletypes and screen readers.
 <P>
 Interactions with <B>cgdisk</B> occur with its interactive text-mode menus.
 The display is broken into two interactive parts:
@@ -330,7 +322,7 @@ Write data. Use this command to save your changes.
 <H2>BUGS</H2>
 
 <P>
-As of March 2014 (version 0.8.10), <B>cgdisk</B> should be considered
+As of January 2013 (version 0.8.6), <B>cgdisk</B> should be considered
 beta software. Although the underlying partition manipulation code is much
 older, the <B>cgdisk</B> ncurses user interface is brand new with GPT fdisk
 version 0.8.0. Known bugs and limitations include:
@@ -480,6 +472,6 @@ available from Rod Smith.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 17:57:37 GMT, March 02, 2014
+Time: 16:09:33 GMT, January 09, 2013
 </BODY>
 </HTML>

@@ -3,7 +3,7 @@
 
 /* By Rod Smith, initial coding January to February, 2009 */
 
-/* This program is copyright (c) 2009-2013 by Roderick W. Smith. It is distributed
+/* This program is copyright (c) 2009-2012 by Roderick W. Smith. It is distributed
   under the terms of the GNU GPL version 2, as detailed in the COPYING file. */
 
 #define __STDC_LIMIT_MACROS
@@ -279,23 +279,8 @@ int GPTData::Verify(void) {
    // Check for MBR-specific problems....
    problems += VerifyMBR();
 
-   // Check for a 0xEE protective partition that's marked as active....
-   if (protectiveMBR.IsEEActive()) {
-      cout << "\nWarning: The 0xEE protective partition in the MBR is marked as active. This is\n"
-           << "technically a violation of the GPT specification, and can cause some EFIs to\n"
-           << "ignore the disk, but it is required to boot from a GPT disk on some BIOS-based\n"
-           << "computers. You can clear this flag by creating a fresh protective MBR using\n"
-           << "the 'n' option on the experts' menu.\n";
-   }
-
    // Verify that partitions don't run into GPT data areas....
    problems += CheckGPTSize();
-
-   if (!protectiveMBR.DoTheyFit()) {
-      cout << "\nPartition(s) in the protective MBR are too big for the disk! Creating a\n"
-           << "fresh protective or hybrid MBR is recommended.\n";
-      problems++;
-   }
 
    // Check that partitions are aligned on proper boundaries (for WD Advanced
    // Format and similar disks)....
@@ -579,7 +564,7 @@ int GPTData::FindHybridMismatches(void) {
          mbrFirst = (uint64_t) protectiveMBR.GetFirstSector(i);
          mbrLast = mbrFirst + (uint64_t) protectiveMBR.GetLength(i) - UINT64_C(1);
          do {
-            if ((j < numParts) && (partitions[j].GetFirstLBA() == mbrFirst) &&
+            if ((partitions[j].GetFirstLBA() == mbrFirst) &&
                 (partitions[j].GetLastLBA() == mbrLast) && (partitions[j].IsUsed()))
                found = 1;
             j++;
@@ -686,15 +671,6 @@ void GPTData::PartitionScan(void) {
 
    // Load the GPT data, whether or not it's valid
    ForceLoadGPTData();
-
-   // Some tools create a 0xEE partition that's too big. If this is detected,
-   // normalize it....
-   if ((state == gpt_valid) && !protectiveMBR.DoTheyFit() && (protectiveMBR.GetValidity() == gpt)) {
-      if (!beQuiet) {
-         cerr << "\aThe protective MBR's 0xEE partition is oversized! Auto-repairing.\n\n";
-      } // if
-      protectiveMBR.MakeProtectiveMBR();
-   } // if
 
    if (!beQuiet) {
       cout << "Partition table scan:\n";
@@ -1071,12 +1047,6 @@ int GPTData::SaveGPTData(int quiet) {
       cerr << "Aborting write operation!\n";
    } // if
 
-   // Check that protective MBR fits, and warn if it doesn't....
-   if (!protectiveMBR.DoTheyFit()) {
-      cerr << "\nPartition(s) in the protective MBR are too big for the disk! Creating a\n"
-           << "fresh protective or hybrid MBR is recommended.\n";
-   }
-
    // Check for mismatched MBR and GPT data, but let it pass if found
    // (function displays warning message)
    FindHybridMismatches();
@@ -1314,7 +1284,6 @@ int GPTData::DestroyGPT(void) {
    uint8_t* emptyTable;
 
    memset(blankSector, 0, sizeof(blankSector));
-   ClearGPTData();
 
    if (myDisk.OpenForWrite()) {
       if (!myDisk.Seek(mainHeader.currentLBA))
@@ -1433,10 +1402,10 @@ void GPTData::DisplayGPTData(void) {
 
 // Show detailed information on the specified partition
 void GPTData::ShowPartDetails(uint32_t partNum) {
-   if ((partNum < numParts) && !IsFreePartNum(partNum)) {
+   if (!IsFreePartNum(partNum)) {
       partitions[partNum].ShowDetails(blockSize);
    } else {
-      cout << "Partition #" << partNum + 1 << " does not exist.\n";
+      cout << "Partition #" << partNum + 1 << " does not exist.";
    } // if
 } // GPTData::ShowPartDetails()
 
@@ -1460,14 +1429,12 @@ WhichToUse GPTData::UseWhichPartitions(void) {
 
    if ((state == gpt_invalid) && ((mbrState == mbr) || (mbrState == hybrid))) {
       cout << "\n***************************************************************\n"
-           << "Found invalid GPT and valid MBR; converting MBR to GPT format\n"
-           << "in memory. ";
+           << "Found invalid GPT and valid MBR; converting MBR to GPT format.\n";
       if (!justLooking) {
-         cout << "\aTHIS OPERATION IS POTENTIALLY DESTRUCTIVE! Exit by\n"
-              << "typing 'q' if you don't want to convert your MBR partitions\n"
-              << "to GPT format!";
+         cout << "\aTHIS OPERATION IS POTENTIALLY DESTRUCTIVE! Exit by typing 'q' if\n"
+              << "you don't want to convert your MBR partitions to GPT format!\n";
       } // if
-      cout << "\n***************************************************************\n\n";
+      cout << "***************************************************************\n\n";
       which = use_mbr;
    } // if
 
@@ -2121,7 +2088,7 @@ uint64_t GPTData::FindFirstInLargest(void) {
 } // GPTData::FindFirstInLargest()
 
 // Find the last available block on the disk.
-// Returns 0 if there are no available sectors
+// Returns 0 if there are no available partitions
 uint64_t GPTData::FindLastAvailable(void) {
    uint64_t last;
    uint32_t i;
@@ -2354,38 +2321,32 @@ int GPTData::ManageAttributes(int partNum, const string & command, const string 
    int retval = 0;
    Attributes theAttr;
 
-   if (partNum >= (int) numParts) {
-      cerr << "Invalid partition number (" << partNum + 1 << ")\n";
-      retval = -1;
+   if (command == "show") {
+      ShowAttributes(partNum);
+   } else if (command == "get") {
+      GetAttribute(partNum, bits);
    } else {
-      if (command == "show") {
-         ShowAttributes(partNum);
-      } else if (command == "get") {
-         GetAttribute(partNum, bits);
+      theAttr = partitions[partNum].GetAttributes();
+      if (theAttr.OperateOnAttributes(partNum, command, bits)) {
+         partitions[partNum].SetAttributes(theAttr.GetAttributes());
+         retval = 1;
       } else {
-         theAttr = partitions[partNum].GetAttributes();
-         if (theAttr.OperateOnAttributes(partNum, command, bits)) {
-            partitions[partNum].SetAttributes(theAttr.GetAttributes());
-            retval = 1;
-         } else {
-            retval = -1;
-         } // if/else
-      } // if/elseif/else
-   } // if/else invalid partition #
+         retval = -1;
+      } // if/else
+   } // if/elseif/else
 
    return retval;
 } // GPTData::ManageAttributes()
 
 // Show all attributes for a specified partition....
 void GPTData::ShowAttributes(const uint32_t partNum) {
-   if ((partNum < numParts) && partitions[partNum].IsUsed())
+   if (partitions[partNum].IsUsed())
       partitions[partNum].ShowAttributes(partNum);
 } // GPTData::ShowAttributes
 
 // Show whether a single attribute bit is set (terse output)...
 void GPTData::GetAttribute(const uint32_t partNum, const string& attributeBits) {
-   if (partNum < numParts)
-      partitions[partNum].GetAttributes().OperateOnAttributes(partNum, "get", attributeBits);
+   partitions[partNum].GetAttributes().OperateOnAttributes(partNum, "get", attributeBits);
 } // GPTData::GetAttribute
 
 
@@ -2439,7 +2400,7 @@ int SizesOK(void) {
       allOK = 0;
    } // if
    if (sizeof(PartType) != 16) {
-      cerr << "PartType is " << sizeof(PartType) << " bytes, should be 16 bytes; aborting!\n";
+      cerr << "PartType is " << sizeof(GUIDData) << " bytes, should be 16 bytes; aborting!\n";
       allOK = 0;
    } // if
    return (allOK);

@@ -4,7 +4,7 @@
 //
 // by Rod Smith, project began February 2009
 
-/* This program is copyright (c) 2009-2013 by Roderick W. Smith. It is distributed
+/* This program is copyright (c) 2009-2011 by Roderick W. Smith. It is distributed
   under the terms of the GNU GPL version 2, as detailed in the COPYING file. */
 
 #include <string.h>
@@ -58,5 +58,4 @@ int main(int argc, char* argv[]) {
          cerr << "Usage: " << argv[0] << " [-l] device_file\n";
          break;
    } // switch
-   return 1 ;
 } // main

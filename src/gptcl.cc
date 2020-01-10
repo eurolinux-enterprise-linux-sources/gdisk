@@ -1,7 +1,7 @@
 /*
     Implementation of GPTData class derivative with popt-based command
     line processing
-    Copyright (C) 2010-2014 Roderick W. Smith
+    Copyright (C) 2010-2011 Roderick W. Smith
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -63,7 +63,7 @@ void GPTDataCL::LoadBackupFile(string backupFile, int &saveData, int &neverSaveD
 int GPTDataCL::DoOptions(int argc, char* argv[]) {
    GPTData secondDevice;
    int opt, numOptions = 0, saveData = 0, neverSaveData = 0;
-   int partNum = 0, newPartNum = -1, saveNonGPT = 1, retval = 0, pretend = 0;
+   int partNum = 0, saveNonGPT = 1, retval = 0, pretend = 0;
    uint64_t low, high, startSector, endSector, sSize;
    uint64_t temp; // temporary variable; free to use in any case
    char *device;
@@ -122,7 +122,7 @@ int GPTDataCL::DoOptions(int argc, char* argv[]) {
 
    // Do one loop through the options to find the device filename and deal
    // with options that don't require a device filename, to flag destructive
-   // (o, z, or Z) options, and to flag presence of a --pretend/-P option
+   // (o, z, or Z) options, and to flag presence of an
    while ((opt = poptGetNextOpt(poptCon)) > 0) {
       switch (opt) {
          case 'A':
@@ -131,7 +131,7 @@ int GPTDataCL::DoOptions(int argc, char* argv[]) {
                Attributes::ListAttributes();
             break;
          case 'L':
-            typeHelper.ShowAllTypes(0);
+            typeHelper.ShowAllTypes();
             break;
          case 'P':
             pretend = 1;
@@ -161,8 +161,6 @@ int GPTDataCL::DoOptions(int argc, char* argv[]) {
                case 'A': {
                   if (cmd != "list") {
                      partNum = (int) GetInt(attributeOperation, 1) - 1;
-                     if (partNum < 0)
-                        partNum = newPartNum;
                      if ((partNum >= 0) && (partNum < (int) GetNumParts())) {
                         switch (ManageAttributes(partNum, GetString(attributeOperation, 2),
                            GetString(attributeOperation, 3))) {
@@ -193,14 +191,9 @@ int GPTDataCL::DoOptions(int argc, char* argv[]) {
                   free(backupFile);
                   break;
                case 'c':
-                  cout << "Setting name!\n";
                   JustLooking(0);
                   partNum = (int) GetInt(partName, 1) - 1;
-                  if (partNum < 0)
-                     partNum = newPartNum;
-                  cout << "partNum is " << partNum << "\n";
                   if ((partNum >= 0) && (partNum < (int) GetNumParts())) {
-                     cout << "REALLY setting name!\n";
                      name = GetString(partName, 2);
                      if (SetName(partNum, (UnicodeString) name.c_str())) {
                         saveData = 1;
@@ -283,19 +276,18 @@ int GPTDataCL::DoOptions(int argc, char* argv[]) {
                   break;
                case 'n':
                   JustLooking(0);
-                  newPartNum = (int) GetInt(newPartInfo, 1) - 1;
-                  if (newPartNum < 0)
-                     newPartNum = FindFirstFreePart();
+                  partNum = (int) GetInt(newPartInfo, 1) - 1;
+                  if (partNum < 0)
+                     partNum = FindFirstFreePart();
                   low = FindFirstInLargest();
-                  Align(&low);
                   high = FindLastInFree(low);
                   startSector = IeeeToInt(GetString(newPartInfo, 2), sSize, low, high, low);
                   endSector = IeeeToInt(GetString(newPartInfo, 3), sSize, startSector, high, high);
-                  if (CreatePartition(newPartNum, startSector, endSector)) {
+                  if (CreatePartition(partNum, startSector, endSector)) {
                      saveData = 1;
                   } else {
-                     cerr << "Could not create partition " << newPartNum + 1 << " from "
-                          << startSector << " to " << endSector << "\n";
+                     cerr << "Could not create partition " << partNum + 1 << " from "
+                     << startSector << " to " << endSector << "\n";
                      neverSaveData = 1;
                   } // if/else
                   free(newPartInfo);
@@ -303,7 +295,6 @@ int GPTDataCL::DoOptions(int argc, char* argv[]) {
                case 'N':
                   JustLooking(0);
                   startSector = FindFirstInLargest();
-                  Align(&startSector);
                   endSector = FindLastInFree(startSector);
                   if (largestPartNum < 0)
                      largestPartNum = FindFirstFreePart();
@@ -358,8 +349,6 @@ int GPTDataCL::DoOptions(int argc, char* argv[]) {
                case 't':
                   JustLooking(0);
                   partNum = (int) GetInt(typeCode, 1) - 1;
-                  if (partNum < 0)
-                     partNum = newPartNum;
                   if ((partNum >= 0) && (partNum < (int) GetNumParts())) {
                      typeHelper = GetString(typeCode, 2);
                      if ((typeHelper != (GUIDData) "00000000-0000-0000-0000-000000000000") &&
@@ -382,8 +371,6 @@ int GPTDataCL::DoOptions(int argc, char* argv[]) {
                   JustLooking(0);
                   saveData = 1;
                   partNum = (int) GetInt(partGUID, 1) - 1;
-                  if (partNum < 0)
-                     partNum = newPartNum;
                   if ((partNum >= 0) && (partNum < (int) GetNumParts())) {
                      SetPartitionGUID(partNum, GetString(partGUID, 2).c_str());
                   }
@@ -478,14 +465,14 @@ int GPTDataCL::BuildMBR(char* argument, int isHybrid) {
    int numParts, allOK = 1, i, origPartNum;
    MBRPart newPart;
    BasicMBRData newMBR;
-
+   
    if (argument != NULL) {
       numParts = CountColons(argument) + 1;
       if (numParts <= (4 - isHybrid)) {
          newMBR.SetDisk(GetDisk());
          for (i = 0; i < numParts; i++) {
             origPartNum = GetInt(argument, i + 1) - 1;
-            if (IsUsedPartNum(origPartNum) && (partitions[origPartNum].IsSizedForMBR() == MBR_SIZED_GOOD)) {
+            if (IsUsedPartNum(origPartNum)) {
                newPart.SetInclusion(PRIMARY);
                newPart.SetLocation(operator[](origPartNum).GetFirstLBA(),
                                    operator[](origPartNum).GetLengthLBA());
@@ -493,7 +480,7 @@ int GPTDataCL::BuildMBR(char* argument, int isHybrid) {
                newPart.SetType((uint8_t)(operator[](origPartNum).GetHexType() / 0x0100));
                newMBR.AddPart(i + isHybrid, newPart);
             } else {
-               cerr << "Original partition " << origPartNum + 1 << " does not exist or is too big! Aborting operation!\n";
+               cerr << "Partition " << origPartNum << " does not exist! Aborting operation!\n";
                allOK = 0;
             } // if/else
          } // for
@@ -504,8 +491,7 @@ int GPTDataCL::BuildMBR(char* argument, int isHybrid) {
             newPart.SetType(0xEE);
             newMBR.AddPart(0, newPart);
          } // if
-         if (allOK)
-            SetProtectiveMBR(newMBR);
+         SetProtectiveMBR(newMBR);
       } else allOK = 0;
    } else allOK = 0;
    if (!allOK)

@@ -2,7 +2,7 @@
 // Class to manage partition type codes -- a slight variant on MBR type
 // codes, GUID type codes, and associated names.
 
-/* This program is copyright (c) 2009-2014 by Roderick W. Smith. It is distributed
+/* This program is copyright (c) 2009-2012 by Roderick W. Smith. It is distributed
   under the terms of the GNU GPL version 2, as detailed in the COPYING file. */
 
 #define __STDC_LIMIT_MACROS
@@ -90,17 +90,6 @@ void PartType::AddAllTypes(void) {
    AddType(0x1c00, "EBD0A0A2-B9E5-4433-87C0-68B6B72699C7", "Microsoft basic data", 0); // Hidden FAT-32 LBA
    AddType(0x1e00, "EBD0A0A2-B9E5-4433-87C0-68B6B72699C7", "Microsoft basic data", 0); // Hidden FAT-16 LBA
    AddType(0x2700, "DE94BBA4-06D1-4D40-A16A-BFD50179D6AC", "Windows RE");
-
-   // Open Network Install Environment (ONIE) specific types.
-   // See http://www.onie.org/ and
-   // https://github.com/onie/onie/blob/master/rootconf/x86_64/sysroot-lib-onie/onie-blkdev-common
-   AddType(0x3000, "7412F7D5-A156-4B13-81DC-867174929325", "ONIE boot");
-   AddType(0x3001, "D4E6E2CD-4469-46F3-B5CB-1BFF57AFC149", "ONIE config");
-
-   // PowerPC reference platform boot partition
-   AddType(0x4100, "9E1A2D38-C612-4316-AA26-8B49521E5A8B", "PowerPC PReP boot");
-
-   // Windows LDM ("dynamic disk") types
    AddType(0x4200, "AF9B60A0-1431-4F62-BC68-3311714A69AD", "Windows LDM data"); // Logical disk manager
    AddType(0x4201, "5808C8AA-7E8F-42E0-85D2-E1E90434CFB3", "Windows LDM metadata"); // Logical disk manager
 
@@ -121,13 +110,6 @@ void PartType::AddAllTypes(void) {
    AddType(0x8200, "0657FD6D-A4AB-43C4-84E5-0933C84B4F4F", "Linux swap"); // Linux swap (or Solaris on MBR)
    AddType(0x8300, "0FC63DAF-8483-4772-8E79-3D69D8477DE4", "Linux filesystem"); // Linux native
    AddType(0x8301, "8DA63339-0007-60C0-C436-083AC8230908", "Linux reserved");
-   // See http://www.freedesktop.org/software/systemd/man/systemd-gpt-auto-generator.html
-   AddType(0x8302, "933AC7E1-2EB4-4F13-B844-0E14E2AEF915", "Linux /home"); // Linux /home (auto-mounted by systemd)
-
-   // Used by Intel Rapid Start technology
-   AddType(0x8400, "D3BFE2DE-3DAF-11DF-BA40-E3A556D89593", "Intel Rapid Start");
-
-   // Another Linux type code....
    AddType(0x8e00, "E6D6D379-F507-44C2-A23C-238F2A3DF928", "Linux LVM");
 
    // FreeBSD partition types....
@@ -190,15 +172,8 @@ void PartType::AddAllTypes(void) {
    AddType(0xc001, "75894C1E-3AEB-11D3-B7C1-7B03A0000000", "HP-UX data");
    AddType(0xc002, "E2A1E728-32E3-11D6-A682-7B03A0000000", "HP-UX service");
 
-   // See http://www.freedesktop.org/wiki/Specifications/BootLoaderSpec
-   AddType(0xea00, "BC13C2FF-59E6-4262-A352-B275FD6F7172", "Freedesktop $BOOT");
-
-   // Type code for Haiku; uses BeOS MBR code as hex code base
-   AddType(0xeb00, "42465331-3BA3-10F1-802A-4861696B7521", "Haiku BFS");
-
-   // Manufacturer-specific ESP-like partitions (in order in which they were added)
+   // Sony uses this GUID on some of its computers.
    AddType(0xed00, "F4019732-066E-4E12-8273-346C5641494F", "Sony system partition");
-   AddType(0xed01, "BFBFAFE7-A34F-448A-9A5B-6213EB736C22", "Lenovo system partition");
 
    // EFI system and related partitions
    AddType(0xef00, "C12A7328-F81F-11D2-BA4B-00A0C93EC93B", "EFI System"); // Parted identifies these as having the "boot flag" set
@@ -315,7 +290,6 @@ string PartType::TypeName(void) const {
    return typeName;
 } // PartType::TypeName()
 
-#ifdef USE_UTF16
 // Return the Unicode description of the partition type (e.g., "Linux filesystem")
 UnicodeString PartType::UTypeName(void) const {
    AType* theItem = allTypes;
@@ -335,7 +309,6 @@ UnicodeString PartType::UTypeName(void) const {
    } // if (!found)
    return typeName;
 } // PartType::TypeName()
-#endif
 
 // Return the custom GPT fdisk 2-byte (16-bit) hex code for this GUID partition type
 // Note that this function ignores entries for which the display variable
@@ -364,14 +337,11 @@ uint16_t PartType::GetHexType() const {
 // Displays the available types and my extended MBR codes for same....
 // Note: This function assumes an 80-column display. On wider displays,
 // it stops at under 80 columns; on narrower displays, lines will wrap
-// in an ugly way. The maxLines value is the maximum number of lines
-// to display before prompting to continue, or 0 (or a negative value)
-// for no limit.
-void PartType::ShowAllTypes(int maxLines) const {
-   int colCount = 1, lineCount = 1;
+// in an ugly way.
+void PartType::ShowAllTypes(void) const {
+   int colCount = 1; // column count
    size_t i;
    AType* thisType = allTypes;
-   string line;
 
    cout.unsetf(ios::uppercase);
    while (thisType != NULL) {
@@ -382,24 +352,17 @@ void PartType::ShowAllTypes(int maxLines) const {
          cout << thisType->name.substr(0, 20);
          for (i = 0; i < (20 - (thisType->name.substr(0, 20).length())); i++)
             cout << " ";
-         if ((colCount % 3) == 0) {
-            if (thisType->next) {
-               cout << "\n";
-               if ((maxLines > 0) && (lineCount++ % maxLines) == 0) {
-                  cout << "Press the <Enter> key to see more codes: ";
-                  getline(cin, line);
-               } // if reached screen line limit
-            } // if there's another entry following this one
-         } else {
+         if ((colCount % 3) == 0)
+            cout << "\n";
+         else
             cout << "  ";
-         }
          colCount++;
       } // if
       thisType = thisType->next;
    } // while
    cout.fill(' ');
    cout << "\n" << dec;
-} // PartType::ShowAllTypes(int maxLines)
+} // PartType::ShowTypes()
 
 // Returns 1 if code is a valid extended MBR code, 0 if it's not
 int PartType::Valid(uint16_t code) const {

@@ -24,13 +24,8 @@
 
 using namespace std;
 
-bool GUIDData::firstInstance = 1;
-
 GUIDData::GUIDData(void) {
-   if (firstInstance) {
-      srand((unsigned int) time(0));
-      firstInstance = 0;
-   } // if
+   srand((unsigned int) time(0));
    Zero();
 } // constructor
 
