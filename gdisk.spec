@@ -1,7 +1,7 @@
 Summary:       An fdisk-like partitioning tool for GPT disks
 Name:          gdisk
 Version:       0.8.6
-Release:       4%{?dist}
+Release:       5%{?dist}
 License:       GPLv2
 URL:           http://www.rodsbooks.com/gdisk/
 Group:         System Environment/Base
@@ -11,6 +11,11 @@ Patch0:        gptfdisk-0.8.1-gcc47.patch
 # https://bugzilla.redhat.com/show_bug.cgi?id=1007761
 # Fedora RHBZ#1007847 - patch sent upstream on 2013-09-13.
 Patch1:        gdisk-0.8.7-add-range-check.patch
+
+# Create partition with sgdisk failed
+# https://bugzilla.redhat.com/show_bug.cgi?id=1087353
+Patch2:        gptfdisk-0.8.7-alignment.patch
+
 BuildRequires: popt-devel
 BuildRequires: libicu-devel
 BuildRequires: libuuid-devel
@@ -26,6 +31,7 @@ tables, and the ability to convert MBR disks to GPT format.
 %setup -q -n gptfdisk-%{version}
 %patch0 -p1
 %patch1 -p1
+%patch2 -p1
 chmod 0644 gdisk_test.sh
 
 %build
@@ -54,6 +60,9 @@ done
 %{_mandir}/man8/fixparts.8*
 
 %changelog
+* Fri Oct 03 2014 Tomas Bzatek <tbzatek@redhat.com> - 0.8.6-5
+- Fix sgdisk alignment code (#1087353)
+
 * Fri Jan 24 2014 Daniel Mach <dmach@redhat.com> - 0.8.6-4
 - Mass rebuild 2014-01-24
 
