@@ -1,7 +1,7 @@
 Summary:       An fdisk-like partitioning tool for GPT disks
 Name:          gdisk
 Version:       0.8.6
-Release:       2%{?dist}
+Release:       4%{?dist}
 License:       GPLv2
 URL:           http://www.rodsbooks.com/gdisk/
 Group:         System Environment/Base
@@ -54,6 +54,12 @@ done
 %{_mandir}/man8/fixparts.8*
 
 %changelog
+* Fri Jan 24 2014 Daniel Mach <dmach@redhat.com> - 0.8.6-4
+- Mass rebuild 2014-01-24
+
+* Fri Dec 27 2013 Daniel Mach <dmach@redhat.com> - 0.8.6-3
+- Mass rebuild 2013-12-27
+
 * Thu Sep 26 2013 Tomas Bzatek <tbzatek@redhat.com> - 0.8.6-2
 - Range check -i option (#1007761)
 
