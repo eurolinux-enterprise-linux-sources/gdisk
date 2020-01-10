@@ -1,11 +1,14 @@
 Summary:       An fdisk-like partitioning tool for GPT disks
 Name:          gdisk
 Version:       0.8.10
-Release:       2%{?dist}
+Release:       3%{?dist}
 License:       GPLv2
 URL:           http://www.rodsbooks.com/gdisk/
 Group:         System Environment/Base
 Source0:       http://downloads.sourceforge.net/gptfdisk/gptfdisk-%{version}.tar.gz
+
+# fix spurious exit code
+Patch0:        gdisk-0.8.10-exit-code.patch
 
 BuildRequires: popt-devel
 BuildRequires: libuuid-devel
@@ -19,6 +22,7 @@ tables, and the ability to convert MBR disks to GPT format.
 
 %prep
 %setup -q -n gptfdisk-%{version}
+%patch0 -p1
 chmod 0644 gdisk_test.sh
 
 %build
@@ -47,6 +51,9 @@ done
 %{_mandir}/man8/fixparts.8*
 
 %changelog
+* Wed Dec 05 2018 Nikola Forró <nforro@redhat.com> - 0.8.10-3
+- Fix spurious exit code (#1656300)
+
 * Mon May 28 2018 Nikola Forró <nforro@redhat.com> - 0.8.10-2
 - Remove libicu build dependency
 
